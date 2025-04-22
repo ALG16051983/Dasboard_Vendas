@@ -1,17 +1,20 @@
 import requests
 
 def buscar_pedidos(api_key):
-    url = f"https://bling.com.br/Api/v2/pedidos/json/?apikey={api_key}"
+    url = f"https://www.bling.com.br/Api/v2/pedidos/json/?apikey={api_key}"
     response = requests.get(url)
-    data = response.json()
-    pedidos = []
-    for pedido in data.get("retorno", {}).get("pedidos", []):
-        p = pedido["pedido"]
-        pedidos.append({
-            "data": p["data"],
-            "numero": p["numero"],
-            "cliente": p["cliente"]["nome"],
-            "valor": p["valor"],
-            "produtos": ", ".join([item["item"]["descricao"] for item in p.get("itens", [])])
-        })
-    return pedidos
+    if response.status_code == 200:
+        data = response.json()
+        pedidos = []
+        if "retorno" in data and "pedidos" in data["retorno"]:
+            for item in data["retorno"]["pedidos"]:
+                pedido = item.get("pedido", {})
+                pedidos.append({
+                    "numero": pedido.get("numero"),
+                    "data": pedido.get("data"),
+                    "cliente": pedido.get("cliente", {}).get("nome"),
+                    "valor": pedido.get("valor")
+                })
+        return pedidos
+    else:
+        return []
